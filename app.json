@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "name": "Shopping App",
+    "slug": "shopping-app",
+    "scheme": "shoppingapp",
+    "plugins": [
+      "expo-router"
+    ],
+    "extra": {
+      "router": {
+        "root": "apps/mobile/app"
+      }
+    }
+  }
+}

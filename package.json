@@ -1,0 +1,26 @@
+{
+  "name": "shopping-app",
+  "version": "1.0.0",
+  "private": true,
+  "main": "expo-router/entry",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "start": "expo start",
+    "mobile": "npm run start --workspace @shopping/mobile",
+    "mobile:android": "npm run android --workspace @shopping/mobile",
+    "mobile:ios": "npm run ios --workspace @shopping/mobile",
+    "mobile:web": "npm run web --workspace @shopping/mobile",
+    "services:dev": "npm run dev --workspace @shopping/services",
+    "services:vercel": "npm run dev:vercel --workspace @shopping/services",
+    "typecheck": "npm run typecheck --workspace @shopping/mobile && npm run typecheck --workspace @shopping/services"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "overrides": {
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  }
+}

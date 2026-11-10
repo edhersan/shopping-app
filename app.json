@@ -3,6 +3,7 @@
     "name": "Shopping App",
     "slug": "shopping-app",
     "scheme": "shoppingapp",
+    "userInterfaceStyle": "automatic",
     "plugins": [
       "expo-router"
     ],

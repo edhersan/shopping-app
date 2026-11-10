@@ -1,11 +1,13 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
+import { useColorScheme } from "react-native";
+import { PaperProvider, useTheme } from "react-native-paper";
+import { darkTheme, lightTheme } from "../constants/theme";
 import { HeaderActions } from "../src/components/HeaderActions";
 import { ScreenState } from "../src/components/ScreenState";
 import { AuthProvider, useAuth } from "../src/context/AuthContext";
 import { CartProvider } from "../src/context/CartContext";
-import { colors } from "../src/utils/theme";
 import { disableWebTranslation } from "../src/utils/webNoTranslate";
 
 disableWebTranslation();
@@ -18,6 +20,7 @@ function useDisableWebTranslation(): void {
 
 function RootNavigator() {
   const { user, hydrated } = useAuth();
+  const paperTheme = useTheme();
 
   if (!hydrated) {
     return <ScreenState variant="loading" message="Cargando sesión..." />;
@@ -26,10 +29,10 @@ function RootNavigator() {
   return (
     <Stack
       screenOptions={{
-        contentStyle: { backgroundColor: colors.background },
+        contentStyle: { backgroundColor: paperTheme.colors.background },
         headerShadowVisible: false,
-        headerStyle: { backgroundColor: colors.surface },
-        headerTintColor: colors.text,
+        headerStyle: { backgroundColor: paperTheme.colors.surface },
+        headerTintColor: paperTheme.colors.onSurface,
         headerTitleStyle: { fontWeight: "700" },
       }}
     >
@@ -53,13 +56,18 @@ function RootNavigator() {
 
 export default function RootLayout() {
   useDisableWebTranslation();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
+  const paperTheme = isDark ? darkTheme : lightTheme;
 
   return (
-    <AuthProvider>
-      <CartProvider>
-        <StatusBar style="dark" />
-        <RootNavigator />
-      </CartProvider>
-    </AuthProvider>
+    <PaperProvider theme={paperTheme}>
+      <AuthProvider>
+        <CartProvider>
+          <StatusBar style={isDark ? "light" : "dark"} />
+          <RootNavigator />
+        </CartProvider>
+      </AuthProvider>
+    </PaperProvider>
   );
 }

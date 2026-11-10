@@ -1,5 +1,5 @@
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
-import { categoryLabel } from "../utils/catalog";
+import { categoryLabel, getProductImageSource } from "../utils/catalog";
 import { formatCurrency } from "../utils/format";
 import { colors, radius, spacing } from "../utils/theme";
 import type { Product } from "../types";
@@ -16,7 +16,7 @@ export function ProductCard({ product, onAdd }: ProductCardProps) {
   return (
     <View style={styles.card}>
       <Image
-        source={{ uri: product.imageUrl }}
+        source={getProductImageSource(product.id, product.imageUrl)}
         style={styles.image}
         resizeMode="cover"
         accessibilityIgnoresInvertColors

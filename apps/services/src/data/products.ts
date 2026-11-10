@@ -9,7 +9,8 @@ export const PRODUCTS: Product[] = [
     price: 89.99,
     currency: "USD",
     category: "electronics",
-    imageUrl: "https://placehold.co/600x450/1e293b/f8fafc?text=Aurora+Headphones",
+    imageUrl:
+      "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&q=80",
     stock: 24,
     rating: 4.7,
   },
@@ -21,7 +22,8 @@ export const PRODUCTS: Product[] = [
     price: 149.5,
     currency: "USD",
     category: "electronics",
-    imageUrl: "https://placehold.co/600x450/312e81/e0e7ff?text=Pulse+Smartwatch",
+    imageUrl:
+      "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=800&q=80",
     stock: 18,
     rating: 4.5,
   },
@@ -33,7 +35,8 @@ export const PRODUCTS: Product[] = [
     price: 59.99,
     currency: "USD",
     category: "electronics",
-    imageUrl: "https://placehold.co/600x450/0f766e/ecfdf5?text=Nimbus+Speaker",
+    imageUrl:
+      "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?auto=format&fit=crop&w=800&q=80",
     stock: 32,
     rating: 4.3,
   },
@@ -45,7 +48,8 @@ export const PRODUCTS: Product[] = [
     price: 34.99,
     currency: "USD",
     category: "electronics",
-    imageUrl: "https://placehold.co/600x450/7c2d12/ffedd5?text=Volt+Charger",
+    imageUrl:
+      "https://images.unsplash.com/photo-1583863788434-e58a36330cf0?auto=format&fit=crop&w=800&q=80",
     stock: 50,
     rating: 4.6,
   },
@@ -57,7 +61,8 @@ export const PRODUCTS: Product[] = [
     price: 54.99,
     currency: "USD",
     category: "clothing",
-    imageUrl: "https://placehold.co/600x450/334155/f1f5f9?text=Cotton+Hoodie",
+    imageUrl:
+      "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=800&q=80",
     stock: 40,
     rating: 4.4,
   },
@@ -69,7 +74,8 @@ export const PRODUCTS: Product[] = [
     price: 119,
     currency: "USD",
     category: "clothing",
-    imageUrl: "https://placehold.co/600x450/14532d/dcfce7?text=Trail+Jacket",
+    imageUrl:
+      "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?auto=format&fit=crop&w=800&q=80",
     stock: 15,
     rating: 4.8,
   },
@@ -81,7 +87,8 @@ export const PRODUCTS: Product[] = [
     price: 44.5,
     currency: "USD",
     category: "clothing",
-    imageUrl: "https://placehold.co/600x450/1e3a8a/dbeafe?text=Denim+Shirt",
+    imageUrl:
+      "https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=800&q=80",
     stock: 28,
     rating: 4.1,
   },
@@ -93,7 +100,8 @@ export const PRODUCTS: Product[] = [
     price: 42.75,
     currency: "USD",
     category: "home",
-    imageUrl: "https://placehold.co/600x450/78350f/fef3c7?text=Pour-Over+Set",
+    imageUrl:
+      "https://images.unsplash.com/photo-1547852703-dbf36c84f766?auto=format&fit=crop&w=800&q=80",
     stock: 22,
     rating: 4.6,
   },
@@ -105,7 +113,8 @@ export const PRODUCTS: Product[] = [
     price: 68,
     currency: "USD",
     category: "home",
-    imageUrl: "https://placehold.co/600x450/52525b/fafafa?text=Lumen+Lamp",
+    imageUrl:
+      "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=800&q=80",
     stock: 19,
     rating: 4.2,
   },
@@ -117,7 +126,8 @@ export const PRODUCTS: Product[] = [
     price: 77.9,
     currency: "USD",
     category: "home",
-    imageUrl: "https://placehold.co/600x450/581c87/f3e8ff?text=Nordic+Blanket",
+    imageUrl:
+      "https://images.unsplash.com/photo-1737061557131-79a9fe0dbab9?auto=format&fit=crop&w=800&q=80",
     stock: 26,
     rating: 4.5,
   },
@@ -129,7 +139,8 @@ export const PRODUCTS: Product[] = [
     price: 39.99,
     currency: "USD",
     category: "sports",
-    imageUrl: "https://placehold.co/600x450/0e7490/ecfeff?text=Yoga+Mat",
+    imageUrl:
+      "https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?auto=format&fit=crop&w=800&q=80",
     stock: 35,
     rating: 4.7,
   },
@@ -141,7 +152,8 @@ export const PRODUCTS: Product[] = [
     price: 94,
     currency: "USD",
     category: "sports",
-    imageUrl: "https://placehold.co/600x450/3f3f46/f4f4f5?text=Summit+Daypack",
+    imageUrl:
+      "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=800&q=80",
     stock: 12,
     rating: 4.9,
   },

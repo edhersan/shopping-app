@@ -1,4 +1,5 @@
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import { getProductImageSource } from "../utils/catalog";
 import { formatCurrency } from "../utils/format";
 import { colors, radius, spacing } from "../utils/theme";
 import { QuantityStepper } from "./QuantityStepper";
@@ -23,7 +24,7 @@ export function CartItemRow({
     <View style={styles.container}>
       <View style={styles.mainRow}>
         <Image
-          source={{ uri: item.product.imageUrl }}
+          source={getProductImageSource(item.product.id, item.product.imageUrl)}
           style={styles.image}
           resizeMode="cover"
           accessibilityIgnoresInvertColors

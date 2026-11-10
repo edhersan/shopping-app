@@ -263,7 +263,7 @@ export default function CheckoutScreen() {
           <Text style={styles.confirmationKicker}>Pago aprobado</Text>
           <Text style={styles.confirmationTitle}>Gracias por tu compra</Text>
           <Text style={styles.confirmationMessage}>
-            Tu pedido fue registrado correctamente. Puedes descargar la factura en PDF.
+            Tu pedido fue registrado correctamente. Descarga y muestra la factura en PDF.
           </Text>
           <View style={styles.summaryBlock}>
             <SummaryRow label="Orden" value={confirmedOrder.id} />
@@ -292,7 +292,7 @@ export default function CheckoutScreen() {
           </Text>
         </View>
         <PrimaryButton
-          label="Descargar factura PDF"
+          label="Descargar y mostrar factura PDF"
           loading={isGeneratingInvoice}
           onPress={() => {
             void handleDownloadInvoice();

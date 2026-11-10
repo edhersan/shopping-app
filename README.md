@@ -154,9 +154,10 @@ La sesión se persiste en AsyncStorage. Desde el encabezado del catálogo puedes
 ### Checkout, tarjeta demo y factura PDF
 
 - La tarjeta de crédito ya viene configurada: **Visa •••• 1111**, titular **Ana Torres**, vence **12/30**. Puedes editarla o restaurarla con **Usar tarjeta**.
-- Al confirmar la compra se muestra la pantalla de éxito con el botón **Descargar factura PDF**:
-  - **Android/iOS:** genera el PDF con `expo-print` y abre la hoja de compartir/guardar de `expo-sharing`.
-  - **Web:** abre el diálogo de impresión del navegador; elige **Guardar como PDF**.
+- Al confirmar la compra se muestra la pantalla de éxito con el botón **Descargar y mostrar factura PDF**:
+  - **Android:** genera el PDF con `expo-print`, solicita autorización para la carpeta elegida (por defecto, Descargas), lo guarda allí y lo abre directamente con el visor PDF del sistema.
+  - **iOS:** genera el PDF y lo guarda en los documentos de la aplicación; después abre la hoja del sistema para mostrarlo o guardarlo en otra ubicación.
+  - **Web:** abre el diálogo de impresión del navegador con el número de orden como nombre predeterminado; elige **Guardar como PDF**.
 - La factura incluye cliente, productos, impuestos, envío, total y los últimos 4 dígitos de la tarjeta.
 - Todos los datos de pago son de demostración; no se procesan cargos reales.
 
@@ -274,7 +275,7 @@ Las funciones de `api/` solo usan módulos nativos de Node, por lo que no necesi
 - **CORS:** el servidor responde con `Access-Control-Allow-Origin: *` por defecto; puedes restringirlo con `ALLOWED_ORIGIN`.
 - **Puerto ocupado:** define `PORT` antes de `npm run services:dev`.
 - **Error `removeChild ... is not a child of this node` en web:** normalmente lo provoca la traducción automática del navegador o una extensión que modifica el DOM. La app fuerza `translate="no"` y `notranslate`; desactiva la traducción del sitio, recarga con `Ctrl+Shift+R` y, en desarrollo, reinicia con `npx expo start --clear`.
-- **La factura PDF en web:** se abre el diálogo de impresión; elige **Guardar como PDF**. En Android/iOS se usa la hoja de compartir/guardar del sistema.
+- **La factura PDF en web:** se abre el diálogo de impresión con el número de orden como nombre predeterminado; elige **Guardar como PDF**. En Android se solicita autorización para la carpeta donde se guardará y se abre un visor PDF compatible; en iOS se usa el almacenamiento privado de documentos y la hoja de compartir/guardar.
 - **Cambios de dependencias en Expo:** usa `npx expo install <paquete>` para obtener versiones compatibles con el SDK.
 - **`expo start` no se reconoce:** usa `npx expo start` desde la raíz o instala la CLI de Expo globalmente. El error `expo/AppEntry.js` / `Unable to resolve "../../App"` ya no aplica: la raíz carga `apps/mobile/app` mediante `extra.router.root`.
 

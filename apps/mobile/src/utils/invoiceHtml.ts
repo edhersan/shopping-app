@@ -33,7 +33,7 @@ export function buildInvoiceHtml(order: Order): string {
 <html lang="es">
   <head>
     <meta charset="utf-8" />
-    <title>Factura ${escapeHtml(order.id)}</title>
+    <title>${escapeHtml(order.id)}</title>
     <style>
       :root { color-scheme: light; }
       * { box-sizing: border-box; }

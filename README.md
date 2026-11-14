@@ -3,8 +3,8 @@
 Proyecto académico full-stack: una app móvil de compras con carrito y checkout, respaldada por microservicios serverless desplegables en Vercel (`/api`).
 
 - **Móvil:** React Native con Expo + Expo Router + TypeScript estricto.
-- **Backend:** Vercel Functions en Node.js/TypeScript (productos, carrito y órdenes).
-- **Persistencia:** catálogo seed en código y órdenes en memoria (se reinician en cada cold start).
+- **Backend:** Vercel Functions en Node.js/TypeScript (productos, carrito, órdenes y autenticación JWT).
+- **Persistencia:** catálogo seed en código y usuarios/órdenes en memoria (se reinician en cada cold start).
 - **Monorepo:** npm workspaces.
 
 ## Requisitos
@@ -26,14 +26,16 @@ shopping-app/
 │  ├─ mobile/
 │  │  ├─ app/                   # Rutas de Expo Router
 │  │  │  ├─ _layout.tsx         # Stack + AuthProvider + CartProvider
-│  │  │  ├─ login.tsx           # Login demo
+│  │  │  ├─ login.tsx           # Login
+│  │  │  ├─ register.tsx        # Registro de usuarios
 │  │  │  ├─ index.tsx           # Catálogo
 │  │  │  ├─ cart.tsx            # Carrito
-│  │  │  └─ checkout.tsx        # Checkout + pago simulado
+│  │  │  ├─ checkout.tsx        # Checkout + pago simulado
+│  │  │  └─ admin.tsx           # Panel de administrador
 │  │  ├─ src/
 │  │  │  ├─ components/         # UI modular
 │  │  │  ├─ context/            # AuthContext + CartContext
-│  │  │  ├─ services/           # Cliente HTTP tipado
+│  │  │  ├─ services/           # Cliente HTTP y almacenamiento seguro de sesión
 │  │  │  ├─ types/              # Contratos TypeScript
 │  │  │  └─ utils/              # Moneda, fechas, auth, tasas, tema
 │  │  ├─ app.json
@@ -49,15 +51,19 @@ shopping-app/
 │     │  ├─ products/[id].ts
 │     │  ├─ cart/validate.ts
 │     │  ├─ orders/index.ts
-│     │  └─ orders/[id].ts
+│     │  ├─ orders/[id].ts
+│     │  ├─ auth/register.ts
+│     │  ├─ auth/login.ts
+│     │  └─ admin/              # Usuarios, órdenes y stock (solo admin)
 │     ├─ public/index.html      # Landing del deployment
 │     ├─ src/
 │     │  ├─ data/products.ts    # Catálogo seed
 │     │  ├─ dev/server.ts       # Servidor local sin login de Vercel
 │     │  ├─ docs/openapi.ts     # Documento OpenAPI 3.0
-│     │  ├─ lib/                # HTTP, errores y validación
-│     │  ├─ services/           # Lógica de negocio
+│     │  ├─ lib/                # HTTP, errores, validación, hashing y JWT
+│     │  ├─ services/           # Lógica de negocio (productos, órdenes, auth)
 │     │  ├─ store/orders.ts     # Órdenes en memoria
+│     │  ├─ store/users.ts      # Usuarios en memoria (seed admin + demo)
 │     │  └─ types/
 │     ├─ package.json
 │     ├─ tsconfig.json
@@ -115,6 +121,8 @@ La app apunta por defecto al API desplegado en Vercel:
 https://shopping-services-zeta.vercel.app/api
 ```
 
+> El login, el registro y los endpoints admin agregados en esta versión requieren volver a desplegar `apps/services` en Vercel. Mientras trabajas en local, inicia `npm run services:dev` y define `EXPO_PUBLIC_API_URL` hacia ese servidor; de lo contrario verás errores de conexión o 404 al autenticarte.
+
 Puedes sobreescribir la URL con `EXPO_PUBLIC_API_URL`. Para trabajar con el servidor local:
 
 - Emulador Android: `http://10.0.2.2:3000/api`.
@@ -142,14 +150,53 @@ cd apps/mobile
 npx expo start --clear
 ```
 
-### Inicio de sesión (demo)
+### Inicio de sesión y registro
 
-La app solicita credenciales antes de mostrar catálogo, carrito y checkout:
+La autenticación se valida contra el microservicio (`POST /api/auth/login`) y devuelve un **JWT firmado con HS256**. La app solicita credenciales antes de mostrar catálogo, carrito y checkout.
 
-- **Usuario:** `expo`
-- **Contraseña:** `1234`
+Cuentas sembradas en la persistencia del servicio:
 
-La sesión se persiste en AsyncStorage. Desde el encabezado del catálogo puedes cerrar sesión con **Salir**. Las credenciales están definidas en `src/utils/constants.ts` (`DEMO_ACCOUNT`) y la validación en `src/utils/auth.ts`.
+| Rol | Usuario | Contraseña |
+| --- | --- | --- |
+| Cliente demo | `expo` | `1234` |
+| Administrador | `admin` | `admin123` |
+
+Desde el login puedes pulsar **Crear cuenta** (`register.tsx`) para registrar un cliente nuevo. El registro llama a `POST /api/auth/register`, guarda el usuario en el store en memoria y devuelve una sesión JWT.
+
+La sesión se guarda con `expo-secure-store` en Android/iOS y con `AsyncStorage` como fallback en web.
+
+#### Configurar `JWT_SECRET`
+
+El servicio exige `JWT_SECRET` con **al menos 32 caracteres**. Sin él, las rutas de autenticación responden con el error:
+
+```text
+JWT_SECRET debe estar configurado y tener al menos 32 caracteres.
+```
+
+Genera un secreto y colócalo en `apps/services/.env`:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+```env
+JWT_SECRET=<secreto-generado>
+JWT_EXPIRES_IN=28800
+```
+
+`JWT_EXPIRES_IN` es opcional y se expresa en segundos (8 horas por defecto). En Vercel configura la misma variable desde el panel del proyecto o con `vercel env add JWT_SECRET`.
+
+### Panel de administrador
+
+Al iniciar sesión con `admin`, el encabezado del catálogo muestra el acceso **Admin**. El panel (`app/admin.tsx`) permite:
+
+- Ver métricas básicas: productos, unidades en stock, alertas y usuarios.
+- Ajustar el stock de cada producto (-1, +1, +10) mediante `POST /api/admin/products/:id/stock`.
+- Consultar los usuarios registrados (`GET /api/admin/users`).
+- Eliminar usuarios con rol cliente (`DELETE /api/admin/users/:id`); las cuentas administrador no se pueden borrar.
+- Consultar las órdenes y el total pagado (`GET /api/admin/orders`).
+
+Los endpoints administrativos exigen `Authorization: Bearer <token>` y verifican la firma, la expiración y que el usuario del token tenga rol `admin`. El token se obtiene en `/api/auth/login`.
 
 ### Checkout, tarjeta demo y factura PDF
 
@@ -181,8 +228,27 @@ type ApiResponse<T> =
 | POST | `/api/cart/validate` | Valida stock y calcula totales |
 | POST | `/api/orders` | Crea la orden y simula el pago |
 | GET | `/api/orders/:id` | Consulta una orden |
+| POST | `/api/auth/register` | Registra un cliente y emite JWT |
+| POST | `/api/auth/login` | Valida credenciales y emite JWT |
+| GET | `/api/admin/users` | Lista usuarios (admin) |
+| DELETE | `/api/admin/users/:id` | Elimina un usuario cliente (admin) |
+| GET | `/api/admin/orders` | Lista órdenes (admin) |
+| POST | `/api/admin/products/:id/stock` | Actualiza stock (admin) |
 
-Códigos de error relevantes: `400` validación, `402` pago rechazado, `404` recurso inexistente, `405` método no permitido, `409` stock insuficiente.
+Códigos de error relevantes: `400` validación, `401` credenciales o token inválidos, `402` pago rechazado, `403` permisos insuficientes, `404` recurso inexistente, `405` método no permitido, `409` stock insuficiente, usuario/correo duplicado o intento de borrar un administrador.
+
+Los endpoints admin requieren `Authorization: Bearer <token>`. Ejemplo:
+
+```bash
+TOKEN=$(curl -s -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"admin123"}' | node -pe "JSON.parse(require('fs').readFileSync(0)).data.token")
+
+curl -X POST http://localhost:3000/api/admin/products/p-001/stock \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"stock":30}'
+```
 
 ### Documentación interactiva (Swagger)
 
@@ -252,7 +318,10 @@ curl -X POST http://localhost:3000/api/orders \
 2. En Vercel, crea un proyecto nuevo e importa el repositorio.
 3. Configura **Root Directory** como `apps/services`.
 4. Framework Preset: **Other**. No requiere build command ni output directory.
-5. Variable de entorno recomendada: `ALLOWED_ORIGIN` (por ejemplo el dominio de tu app o `*` para la demo).
+5. Variables de entorno:
+   - `ALLOWED_ORIGIN`: dominio de tu app o `*` para la demo.
+   - `JWT_SECRET`: obligatoria, mínimo 32 caracteres.
+   - `JWT_EXPIRES_IN`: opcional, duración del token en segundos.
 6. Despliega. La API quedará en `https://<tu-proyecto>.vercel.app/api`.
 7. La app móvil ya apunta al endpoint actual. Si despliegas otro proyecto, actualiza `EXPO_PUBLIC_API_URL` en el `.env` correspondiente:
    ```bash
@@ -264,15 +333,20 @@ Las funciones de `api/` solo usan módulos nativos de Node, por lo que no necesi
 
 ## Persistencia y limitaciones
 
-- El catálogo y las órdenes viven en memoria: cada cold start o redeploy restablece el stock y borra las órdenes.
-- El carrito y la sesión demo se persisten en el dispositivo con AsyncStorage.
-- El pago y el login son simulaciones académicas; no hay pasarela real ni autenticación de servidor.
+- El catálogo, las órdenes y los usuarios viven en memoria: cada cold start o redeploy restablece el stock, borra las órdenes y vuelve a sembrar las cuentas `admin` y `expo`.
+- El carrito se persiste con AsyncStorage.
+- La sesión JWT se guarda con `expo-secure-store` en Android/iOS y AsyncStorage en web.
+- Las contraseñas se almacenan con `scrypt` y sal aleatoria; nunca se guardan en texto plano.
+- El pago es una simulación académica y no hay pasarela real.
+- Los JWT son stateless: no hay lista de revocación ni refresh tokens; al expirar, el usuario debe iniciar sesión de nuevo.
 - La tarjeta demo se usa solo para la simulación de checkout y la factura PDF.
 
 ## Solución de problemas
 
 - **La app no conecta con el API:** por defecto usa `https://shopping-services-zeta.vercel.app/api`; revisa tu conexión. Para el servidor local define `EXPO_PUBLIC_API_URL` con `http://10.0.2.2:3000/api` en Android (nunca `localhost`) o `http://localhost:3000/api` en iOS/web, y asegúrate de que el servicio esté corriendo.
 - **CORS:** el servidor responde con `Access-Control-Allow-Origin: *` por defecto; puedes restringirlo con `ALLOWED_ORIGIN`.
+- **`JWT_SECRET` inválido:** el microservicio no arranca si falta o tiene menos de 32 caracteres. Define `JWT_SECRET` en `apps/services/.env` (local) o en las variables de entorno de Vercel.
+- **Sesión vencida o token inválido:** vuelve a iniciar sesión; la app limpia la sesión al recibir `401`.
 - **Puerto ocupado:** define `PORT` antes de `npm run services:dev`.
 - **Error `removeChild ... is not a child of this node` en web:** normalmente lo provoca la traducción automática del navegador o una extensión que modifica el DOM. La app fuerza `translate="no"` y `notranslate`; desactiva la traducción del sitio, recarga con `Ctrl+Shift+R` y, en desarrollo, reinicia con `npx expo start --clear`.
 - **La factura PDF en web:** se abre el diálogo de impresión con el número de orden como nombre predeterminado; elige **Guardar como PDF**. En Android se solicita autorización para la carpeta donde se guardará y se abre un visor PDF compatible; en iOS se usa el almacenamiento privado de documentos y la hoja de compartir/guardar.

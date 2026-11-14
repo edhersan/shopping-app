@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import { useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -14,6 +15,7 @@ import { useAuth } from "../src/context/AuthContext";
 import { colors, radius, spacing } from "../src/utils/theme";
 
 export default function LoginScreen() {
+  const router = useRouter();
   const { login } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -95,18 +97,24 @@ export default function LoginScreen() {
                 void handleSubmit();
               }}
             />
+            <PrimaryButton
+              label="Crear cuenta"
+              variant="secondary"
+              onPress={() => router.push("/register")}
+            />
           </View>
 
           <View style={styles.demoCard}>
             <Text style={styles.demoTitle}>Credenciales de prueba</Text>
             <Text style={styles.demoText}>
-              Usuario: <Text style={styles.demoValue}>expo</Text>
+              Cliente: <Text style={styles.demoValue}>expo / 1234</Text>
             </Text>
             <Text style={styles.demoText}>
-              Contraseña: <Text style={styles.demoValue}>1234</Text>
+              Admin: <Text style={styles.demoValue}>admin / admin123</Text>
             </Text>
             <Text style={styles.demoNote}>
-              Demo académica: la sesión se guarda en el dispositivo con AsyncStorage.
+              Los usuarios se guardan en la persistencia del servicio. La sesión se conserva
+              en el dispositivo con AsyncStorage.
             </Text>
           </View>
         </ScrollView>

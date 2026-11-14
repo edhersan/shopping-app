@@ -46,9 +46,14 @@ function RootNavigator() {
         />
         <Stack.Screen name="cart" options={{ title: "Carrito" }} />
         <Stack.Screen name="checkout" options={{ title: "Confirmar compra" }} />
+        <Stack.Screen
+          name="admin"
+          options={{ title: "Panel de administrador" }}
+        />
       </Stack.Protected>
       <Stack.Protected guard={user === null}>
         <Stack.Screen name="login" options={{ headerShown: false }} />
+        <Stack.Screen name="register" options={{ title: "Crear cuenta" }} />
       </Stack.Protected>
     </Stack>
   );

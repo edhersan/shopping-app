@@ -10,3 +10,9 @@ export function saveOrder(order: Order): Order {
 export function findOrderById(id: string): Order | undefined {
   return orders.get(id);
 }
+
+export function listOrders(): Order[] {
+  return Array.from(orders.values()).sort((left, right) =>
+    right.createdAt.localeCompare(left.createdAt),
+  );
+}

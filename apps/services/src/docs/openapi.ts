@@ -8,7 +8,9 @@ export const openApiDocument = {
       "",
       "Reglas de negocio: impuesto del 8%, envío de $5.99 (gratis desde $100) y máximo de 99 unidades por línea.",
       "El pago es simulado: las tarjetas terminadas en 0000 se rechazan con HTTP 402.",
-      "Las órdenes y el stock viven en memoria y se reinician en cada cold start.",
+      "Login y registro emiten un JWT firmado con HS256. Los endpoints admin requieren Authorization: Bearer <token>.",
+      "JWT_SECRET debe estar configurado y tener al menos 32 caracteres.",
+      "Las órdenes, los usuarios y el stock viven en memoria y se reinician en cada cold start.",
     ].join("\n"),
     contact: {
       name: "Shopping App",
@@ -30,6 +32,8 @@ export const openApiDocument = {
     { name: "Catálogo", description: "Productos disponibles" },
     { name: "Carrito", description: "Validación de precios y stock" },
     { name: "Órdenes", description: "Checkout y pago simulado" },
+    { name: "Usuarios", description: "Registro e inicio de sesión" },
+    { name: "Administración", description: "Panel de administrador" },
   ],
   security: [],
   paths: {
@@ -231,6 +235,201 @@ export const openApiDocument = {
         },
       },
     },
+    "/auth/register": {
+      post: {
+        tags: ["Usuarios"],
+        operationId: "registerUser",
+        summary: "Registra un nuevo usuario cliente",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/RegisterRequest" },
+              example: {
+                fullName: "Ana Torres",
+                username: "ana.torres",
+                email: "ana@example.com",
+                password: "secreto123",
+              },
+            },
+          },
+        },
+        responses: {
+          "201": {
+            description: "Usuario creado y sesión JWT emitida",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/AuthSessionResponse" },
+              },
+            },
+          },
+          "400": { $ref: "#/components/responses/BadRequest" },
+          "405": { $ref: "#/components/responses/MethodNotAllowed" },
+          "409": { $ref: "#/components/responses/Conflict" },
+        },
+      },
+    },
+    "/auth/login": {
+      post: {
+        tags: ["Usuarios"],
+        operationId: "loginUser",
+        summary: "Inicia sesión con usuario y contraseña",
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/LoginRequest" },
+              example: { username: "admin", password: "admin123" },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Credenciales válidas y sesión JWT emitida",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/AuthSessionResponse" },
+              },
+            },
+          },
+          "400": { $ref: "#/components/responses/BadRequest" },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "405": { $ref: "#/components/responses/MethodNotAllowed" },
+        },
+      },
+    },
+    "/admin/users": {
+      get: {
+        tags: ["Administración"],
+        operationId: "listUsers",
+        summary: "Lista los usuarios registrados (solo admin)",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "Listado de usuarios",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/UserListResponse" },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "405": { $ref: "#/components/responses/MethodNotAllowed" },
+        },
+      },
+    },
+    "/admin/users/{id}": {
+      delete: {
+        tags: ["Administración"],
+        operationId: "deleteUser",
+        summary: "Elimina un usuario que no sea administrador (solo admin)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "Identificador del usuario.",
+            schema: { type: "string" },
+            example: "usr_1a2b3c4d5e6f",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Usuario eliminado",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/UserResponse" },
+              },
+            },
+          },
+          "400": { $ref: "#/components/responses/BadRequest" },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "405": { $ref: "#/components/responses/MethodNotAllowed" },
+          "409": {
+            description: "El usuario es administrador y no se puede eliminar",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+                example: {
+                  success: false,
+                  error: {
+                    code: "CANNOT_DELETE_ADMIN",
+                    message: "No se puede eliminar a un usuario administrador.",
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/admin/orders": {
+      get: {
+        tags: ["Administración"],
+        operationId: "listOrders",
+        summary: "Lista todas las órdenes (solo admin)",
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "Listado de órdenes",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/OrderListResponse" },
+              },
+            },
+          },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "405": { $ref: "#/components/responses/MethodNotAllowed" },
+        },
+      },
+    },
+    "/admin/products/{id}/stock": {
+      post: {
+        tags: ["Administración"],
+        operationId: "updateProductStock",
+        summary: "Actualiza el stock de un producto (solo admin)",
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: "id",
+            in: "path",
+            required: true,
+            description: "Identificador del producto.",
+            schema: { type: "string" },
+            example: "p-001",
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/UpdateStockRequest" },
+              example: { stock: 30 },
+            },
+          },
+        },
+        responses: {
+          "200": {
+            description: "Producto actualizado",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ProductResponse" },
+              },
+            },
+          },
+          "400": { $ref: "#/components/responses/BadRequest" },
+          "401": { $ref: "#/components/responses/Unauthorized" },
+          "403": { $ref: "#/components/responses/Forbidden" },
+          "404": { $ref: "#/components/responses/NotFound" },
+          "405": { $ref: "#/components/responses/MethodNotAllowed" },
+        },
+      },
+    },
     "/docs": {
       get: {
         tags: ["Sistema"],
@@ -304,6 +503,68 @@ export const openApiDocument = {
           },
           stock: { type: "integer", minimum: 0, example: 24 },
           rating: { type: "number", format: "double", minimum: 0, maximum: 5, example: 4.7 },
+        },
+      },
+      User: {
+        type: "object",
+        required: ["id", "username", "fullName", "email", "role", "createdAt"],
+        properties: {
+          id: { type: "string", example: "usr_1a2b3c4d5e6f" },
+          username: { type: "string", example: "ana.torres" },
+          fullName: { type: "string", example: "Ana Torres" },
+          email: { type: "string", format: "email", example: "ana@example.com" },
+          role: { type: "string", enum: ["customer", "admin"], example: "customer" },
+          createdAt: {
+            type: "string",
+            format: "date-time",
+            example: "2026-11-14T15:30:00.000Z",
+          },
+        },
+      },
+      AuthSession: {
+        type: "object",
+        required: ["token", "expiresAt", "user"],
+        properties: {
+          token: {
+            type: "string",
+            description: "JWT firmado con HS256.",
+            example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+          },
+          expiresAt: {
+            type: "string",
+            format: "date-time",
+            example: "2026-11-14T23:30:00.000Z",
+          },
+          user: { $ref: "#/components/schemas/User" },
+        },
+      },
+      LoginRequest: {
+        type: "object",
+        required: ["username", "password"],
+        properties: {
+          username: { type: "string", example: "admin" },
+          password: { type: "string", example: "admin123" },
+        },
+      },
+      RegisterRequest: {
+        type: "object",
+        required: ["fullName", "username", "email", "password"],
+        properties: {
+          fullName: { type: "string", minLength: 3, example: "Ana Torres" },
+          username: {
+            type: "string",
+            pattern: "^[a-zA-Z0-9._-]{3,20}$",
+            example: "ana.torres",
+          },
+          email: { type: "string", format: "email", example: "ana@example.com" },
+          password: { type: "string", minLength: 6, example: "secreto123" },
+        },
+      },
+      UpdateStockRequest: {
+        type: "object",
+        required: ["stock"],
+        properties: {
+          stock: { type: "integer", minimum: 0, maximum: 999, example: 30 },
         },
       },
       OrderLineInput: {
@@ -524,6 +785,52 @@ export const openApiDocument = {
           data: { $ref: "#/components/schemas/Order" },
         },
       },
+      UserResponse: {
+        type: "object",
+        required: ["success", "data"],
+        properties: {
+          success: { type: "boolean", enum: [true], example: true },
+          data: { $ref: "#/components/schemas/User" },
+        },
+      },
+      AuthSessionResponse: {
+        type: "object",
+        required: ["success", "data"],
+        properties: {
+          success: { type: "boolean", enum: [true], example: true },
+          data: { $ref: "#/components/schemas/AuthSession" },
+        },
+      },
+      UserListResponse: {
+        type: "object",
+        required: ["success", "data"],
+        properties: {
+          success: { type: "boolean", enum: [true], example: true },
+          data: {
+            type: "array",
+            items: { $ref: "#/components/schemas/User" },
+          },
+        },
+      },
+      OrderListResponse: {
+        type: "object",
+        required: ["success", "data"],
+        properties: {
+          success: { type: "boolean", enum: [true], example: true },
+          data: {
+            type: "array",
+            items: { $ref: "#/components/schemas/Order" },
+          },
+        },
+      },
+    },
+    securitySchemes: {
+      bearerAuth: {
+        type: "http",
+        scheme: "bearer",
+        bearerFormat: "JWT",
+        description: "Token devuelto por /auth/login o /auth/register.",
+      },
     },
     responses: {
       BadRequest: {
@@ -586,6 +893,36 @@ export const openApiDocument = {
                 details: [
                   "La tarjeta terminada en 0000 fue rechazada porque termina en 0000.",
                 ],
+              },
+            },
+          },
+        },
+      },
+      Unauthorized: {
+        description: "Credenciales incorrectas o token ausente, inválido o vencido",
+        content: {
+          "application/json": {
+            schema: { $ref: "#/components/schemas/ErrorResponse" },
+            example: {
+              success: false,
+              error: {
+                code: "INVALID_TOKEN",
+                message: "El token es inválido.",
+              },
+            },
+          },
+        },
+      },
+      Forbidden: {
+        description: "El usuario no tiene permisos de administrador",
+        content: {
+          "application/json": {
+            schema: { $ref: "#/components/schemas/ErrorResponse" },
+            example: {
+              success: false,
+              error: {
+                code: "FORBIDDEN",
+                message: "No tienes permisos para acceder a este recurso.",
               },
             },
           },

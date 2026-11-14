@@ -11,13 +11,20 @@ import productsHandler from "../../api/products/index";
 import validateCartHandler from "../../api/cart/validate";
 import orderByIdHandler from "../../api/orders/[id]";
 import ordersHandler from "../../api/orders/index";
+import loginHandler from "../../api/auth/login";
+import registerHandler from "../../api/auth/register";
+import adminOrdersHandler from "../../api/admin/orders/index";
+import adminStockHandler from "../../api/admin/products/[id]/stock";
+import adminUserHandler from "../../api/admin/users/[id]";
+import adminUsersHandler from "../../api/admin/users/index";
 import { ApiError } from "../lib/errors";
 import { handleOptions, sendError } from "../lib/http";
+import { assertJwtConfiguration } from "../lib/jwt";
 
 type Handler = (req: VercelRequest, res: VercelResponse) => void | Promise<void>;
 
 interface RouteDefinition {
-  method: "GET" | "POST";
+  method: "GET" | "POST" | "DELETE";
   pattern: RegExp;
   handler: Handler;
   paramName?: string;
@@ -37,6 +44,70 @@ const LANDING_HTML = readFileSync(
   join(process.cwd(), "public", "index.html"),
   "utf8",
 );
+
+function loadLocalEnv(): void {
+  const envPath = join(process.cwd(), ".env");
+
+  if (typeof process.loadEnvFile === "function") {
+    try {
+      process.loadEnvFile(envPath);
+      return;
+    } catch (error) {
+      const code =
+        typeof error === "object" && error !== null && "code" in error
+          ? String((error as { code?: unknown }).code)
+          : "";
+
+      if (code === "ENOENT") {
+        return;
+      }
+
+      console.warn(`No se pudo cargar ${envPath}:`, error);
+      return;
+    }
+  }
+
+  try {
+    const content = readFileSync(envPath, "utf8");
+
+    for (const line of content.split(/\r?\n/)) {
+      const trimmed = line.trim();
+
+      if (trimmed.length === 0 || trimmed.startsWith("#")) {
+        continue;
+      }
+
+      const separator = trimmed.indexOf("=");
+
+      if (separator <= 0) {
+        continue;
+      }
+
+      const key = trimmed.slice(0, separator).trim();
+      let value = trimmed.slice(separator + 1).trim();
+
+      if (
+        (value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'"))
+      ) {
+        value = value.slice(1, -1);
+      }
+
+      if (process.env[key] === undefined) {
+        process.env[key] = value;
+      }
+    }
+  } catch (error) {
+    const code =
+      typeof error === "object" && error !== null && "code" in error
+        ? String((error as { code?: unknown }).code)
+        : "";
+
+    if (code !== "ENOENT") {
+      console.warn(`No se pudo cargar ${envPath}:`, error);
+    }
+  }
+}
 
 const landingHandler: Handler = (_req, res) => {
   res.setHeader("Content-Type", "text/html; charset=utf-8");
@@ -66,6 +137,30 @@ const routes: readonly RouteDefinition[] = [
     method: "GET",
     pattern: /^\/api\/orders\/([^/]+)\/?$/,
     handler: orderByIdHandler,
+    paramName: "id",
+  },
+  { method: "POST", pattern: /^\/api\/auth\/register\/?$/, handler: registerHandler },
+  { method: "POST", pattern: /^\/api\/auth\/login\/?$/, handler: loginHandler },
+  {
+    method: "GET",
+    pattern: /^\/api\/admin\/users\/?$/,
+    handler: adminUsersHandler,
+  },
+  {
+    method: "DELETE",
+    pattern: /^\/api\/admin\/users\/([^/]+)\/?$/,
+    handler: adminUserHandler,
+    paramName: "id",
+  },
+  {
+    method: "GET",
+    pattern: /^\/api\/admin\/orders\/?$/,
+    handler: adminOrdersHandler,
+  },
+  {
+    method: "POST",
+    pattern: /^\/api\/admin\/products\/([^/]+)\/stock\/?$/,
+    handler: adminStockHandler,
     paramName: "id",
   },
 ];
@@ -203,6 +298,17 @@ async function handleRequest(
   }
 }
 
+loadLocalEnv();
+
+try {
+  assertJwtConfiguration();
+} catch (error) {
+  console.error(
+    error instanceof Error ? error.message : "Configuración JWT inválida.",
+  );
+  process.exit(1);
+}
+
 const parsedPort = Number(process.env.PORT ?? "3000");
 const port = Number.isInteger(parsedPort) && parsedPort > 0 ? parsedPort : 3000;
 
@@ -215,4 +321,7 @@ server.listen(port, () => {
   console.log("Landing: GET /");
   console.log("Rutas: GET /api/health, GET /api/docs, GET /api/openapi, GET /api/products, GET /api/products/:id");
   console.log("       POST /api/cart/validate, POST /api/orders, GET /api/orders/:id");
+  console.log("       POST /api/auth/register, POST /api/auth/login");
+  console.log("       GET /api/admin/users, DELETE /api/admin/users/:id, GET /api/admin/orders");
+  console.log("       POST /api/admin/products/:id/stock");
 });

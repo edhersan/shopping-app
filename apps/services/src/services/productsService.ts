@@ -42,6 +42,12 @@ export function requireProduct(id: string): Product {
   return product;
 }
 
+export function setProductStock(productId: string, stock: number): Product {
+  const product = requireProduct(productId);
+  product.stock = stock;
+  return product;
+}
+
 export function decrementStock(productId: string, quantity: number): void {
   const product = requireProduct(productId);
 

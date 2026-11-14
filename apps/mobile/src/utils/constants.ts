@@ -5,7 +5,8 @@ export const API_BASE_URL = (
 ).replace(/\/+$/, "");
 
 export const CART_STORAGE_KEY = "shopping.cart.v1";
-export const AUTH_STORAGE_KEY = "shopping.auth.v1";
+export const AUTH_STORAGE_KEY = "shopping.auth.v2";
+export const LEGACY_AUTH_STORAGE_KEY = "shopping.auth.v1";
 export const REQUEST_TIMEOUT_MS = 10000;
 
 export const DEMO_ACCOUNT = {

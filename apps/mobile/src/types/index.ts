@@ -2,8 +2,33 @@ export type CurrencyCode = "USD";
 
 export type ProductCategory = "electronics" | "clothing" | "home" | "sports";
 
+export type UserRole = "customer" | "admin";
+
 export interface AuthUser {
+  id: string;
   username: string;
+  fullName: string;
+  email: string;
+  role: UserRole;
+  createdAt: string;
+}
+
+export interface AuthSession {
+  token: string;
+  expiresAt: string;
+  user: AuthUser;
+}
+
+export interface LoginRequest {
+  username: string;
+  password: string;
+}
+
+export interface RegisterRequest {
+  fullName: string;
+  username: string;
+  email: string;
+  password: string;
 }
 
 export interface Product {

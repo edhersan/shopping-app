@@ -1,12 +1,21 @@
 import { ApiError } from "./errors";
-import type { CreateOrderRequest, Customer, OrderLineInput, PaymentRequest } from "../types";
+import type {
+  CreateOrderRequest,
+  Customer,
+  LoginRequest,
+  OrderLineInput,
+  PaymentRequest,
+  RegisterRequest,
+} from "../types";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const ZIP_PATTERN = /^[0-9A-Za-z -]{3,10}$/;
 const EXPIRY_PATTERN = /^(0[1-9]|1[0-2])\/(\d{2})$/;
 const CARD_DIGITS_PATTERN = /^\d{13,19}$/;
 const CVV_PATTERN = /^\d{3,4}$/;
+const USERNAME_PATTERN = /^[a-z0-9._-]{3,20}$/;
 const MAX_QUANTITY_PER_ITEM = 99;
+const MAX_STOCK = 999;
 
 export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -174,4 +183,76 @@ export function validateCreateOrderRequest(body: unknown): CreateOrderRequest {
   }
 
   return { items, customer, payment };
+}
+
+export function validateRegisterRequest(body: unknown): RegisterRequest {
+  if (!isRecord(body)) {
+    throw new ApiError(400, "VALIDATION_ERROR", "El cuerpo de la solicitud es inválido.");
+  }
+
+  const errors: string[] = [];
+  const fullName = stringField(body, "fullName", "El nombre completo", 3, errors);
+  const username = stringField(body, "username", "El nombre de usuario", 3, errors);
+  const email = stringField(body, "email", "El correo electrónico", 5, errors);
+  const password = stringField(body, "password", "La contraseña", 6, errors);
+
+  if (username !== undefined && !USERNAME_PATTERN.test(username.toLowerCase())) {
+    errors.push(
+      "El nombre de usuario debe tener entre 3 y 20 caracteres y solo puede incluir letras, números, puntos, guiones o guiones bajos.",
+    );
+  }
+
+  if (email !== undefined && !EMAIL_PATTERN.test(email)) {
+    errors.push("El correo electrónico no es válido.");
+  }
+
+  if (!fullName || !username || !email || !password || errors.length > 0) {
+    throw new ApiError(400, "VALIDATION_ERROR", "Revisa los datos de registro.", errors);
+  }
+
+  return {
+    fullName,
+    username: username.toLowerCase(),
+    email: email.toLowerCase(),
+    password,
+  };
+}
+
+export function validateLoginRequest(body: unknown): LoginRequest {
+  if (!isRecord(body)) {
+    throw new ApiError(400, "VALIDATION_ERROR", "El cuerpo de la solicitud es inválido.");
+  }
+
+  const errors: string[] = [];
+  const username = stringField(body, "username", "El nombre de usuario", 1, errors);
+  const password = stringField(body, "password", "La contraseña", 1, errors);
+
+  if (!username || !password || errors.length > 0) {
+    throw new ApiError(400, "VALIDATION_ERROR", "Revisa las credenciales.", errors);
+  }
+
+  return { username, password };
+}
+
+export function validateUpdateStockRequest(body: unknown): number {
+  if (!isRecord(body)) {
+    throw new ApiError(400, "VALIDATION_ERROR", "El cuerpo de la solicitud es inválido.");
+  }
+
+  const stock = body.stock;
+
+  if (
+    typeof stock !== "number" ||
+    !Number.isInteger(stock) ||
+    stock < 0 ||
+    stock > MAX_STOCK
+  ) {
+    throw new ApiError(
+      400,
+      "VALIDATION_ERROR",
+      `El stock debe ser un entero entre 0 y ${MAX_STOCK}.`,
+    );
+  }
+
+  return stock;
 }

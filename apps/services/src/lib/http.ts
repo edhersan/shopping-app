@@ -6,8 +6,8 @@ const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN ?? "*";
 
 function applyCommonHeaders(res: VercelResponse): void {
   res.setHeader("Access-Control-Allow-Origin", ALLOWED_ORIGIN);
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
   res.setHeader("Cache-Control", "no-store");
 }
 
@@ -106,4 +106,9 @@ export function firstQueryValue(value: string | string[] | undefined): string | 
   }
 
   return value;
+}
+
+export function headerValue(req: VercelRequest, name: string): string | undefined {
+  const value = req.headers[name.toLowerCase()];
+  return Array.isArray(value) ? value[0] : value;
 }
